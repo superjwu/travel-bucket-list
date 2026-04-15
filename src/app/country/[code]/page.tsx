@@ -69,6 +69,7 @@ export default async function CountryPage(props: {
             className="object-cover"
             priority
             sizes="100vw"
+            unoptimized
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-accent/80 to-accent-dark" />

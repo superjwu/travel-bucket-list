@@ -140,7 +140,7 @@ export function ExploreClient({
                     isSaved={savedCodes.has(country.cca3)}
                     safetyLevel={safetyMap[country.cca2]}
                     photoUrl={photoMap[country.cca3]}
-                    lazy={index >= 8}
+                    lazy={!photoMap[country.cca3] && index >= 8}
                     variant={variant}
                   />
                 </div>

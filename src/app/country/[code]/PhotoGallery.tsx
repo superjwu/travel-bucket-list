@@ -29,6 +29,7 @@ export async function PhotoGallery({ countryName }: { countryName: string }) {
                 className="object-cover transition-transform duration-300 hover:scale-105"
                 sizes="(max-width: 640px) 50vw, 33vw"
                 loading="lazy"
+                unoptimized
               />
             </div>
             <p className="mt-1 text-[10px] text-foreground/40">
