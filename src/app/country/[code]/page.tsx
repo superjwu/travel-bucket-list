@@ -10,6 +10,7 @@ import { AddToBucketList } from "@/components/AddToBucketList";
 import { SafetySection } from "./SafetySection";
 import { AttractionsSection } from "./AttractionsSection";
 import { CostOfLivingSection } from "./CostOfLivingSection";
+import { PhotoGallery } from "./PhotoGallery";
 
 export async function generateMetadata(props: {
   params: Promise<{ code: string }>;
@@ -153,6 +154,10 @@ export default async function CountryPage(props: {
 
         <Suspense fallback={<SectionSkeleton title="Quality of Life" />}>
           <CostOfLivingSection capitalName={capitalName} />
+        </Suspense>
+
+        <Suspense fallback={<SectionSkeleton title="Photo Gallery" />}>
+          <PhotoGallery countryName={country.name.common} />
         </Suspense>
 
         {/* Country Details — instant, no API calls */}

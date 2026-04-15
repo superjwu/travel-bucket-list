@@ -20,25 +20,64 @@ export interface AttractionDetail {
   address: string;
 }
 
+// Category labels for display
+const KIND_LABELS: Record<string, string> = {
+  architecture: "Architecture",
+  historic_architecture: "Historic",
+  churches: "Church",
+  castles: "Castle",
+  monuments_and_memorials: "Monument",
+  museums: "Museum",
+  natural: "Nature",
+  beaches: "Beach",
+  mountains: "Mountain",
+  parks: "Park",
+  theatres_and_entertainments: "Entertainment",
+  sport: "Sport",
+  gardens_and_parks: "Garden",
+  view_points: "Viewpoint",
+  archaeological_sites: "Archaeological",
+  bridges: "Bridge",
+  towers: "Tower",
+  lighthouses: "Lighthouse",
+};
+
+export function getAttractionCategory(kinds: string): string {
+  for (const [key, label] of Object.entries(KIND_LABELS)) {
+    if (kinds.includes(key)) return label;
+  }
+  return "Place of Interest";
+}
+
 export async function getAttractions(
   lat: number,
   lon: number,
-  limit = 8
+  limit = 15
 ): Promise<Attraction[]> {
   const key = process.env.OPENTRIPMAP_API_KEY;
   if (!key) return [];
 
   try {
-    const radius = 50000; // 50km radius from capital
+    // Use large radius (500km) to cover entire country area from capital
+    const radius = 500000;
     const res = await fetch(
-      `https://api.opentripmap.com/0.1/en/places/radius?radius=${radius}&lon=${lon}&lat=${lat}&kinds=interesting_places&rate=3&format=json&limit=${limit}&apikey=${key}`,
+      `https://api.opentripmap.com/0.1/en/places/radius?radius=${radius}&lon=${lon}&lat=${lat}&kinds=interesting_places,architecture,historic,museums,natural,beaches&rate=2&format=json&limit=${limit}&apikey=${key}`,
       { next: { revalidate: 86400 } }
     );
     if (!res.ok) return [];
 
     const data = await res.json();
+    // Deduplicate by name and sort by rating
+    const seen = new Set<string>();
     return (data ?? [])
-      .filter((p: Record<string, unknown>) => p.name)
+      .filter((p: Record<string, unknown>) => {
+        if (!p.name || seen.has(p.name as string)) return false;
+        seen.add(p.name as string);
+        return true;
+      })
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
+        ((b.rate as number) || 0) - ((a.rate as number) || 0)
+      )
       .map((p: Record<string, unknown>) => ({
         xid: p.xid,
         name: p.name,
