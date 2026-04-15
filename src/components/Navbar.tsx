@@ -1,36 +1,66 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   SignInButton,
   Show,
   UserButton,
 } from "@clerk/nextjs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Navbar() {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const linkClass = (href: string) =>
+    `relative py-1 text-sm font-medium transition-colors ${
+      pathname === href
+        ? "text-accent"
+        : "text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
+    }`;
+
+  const activeDot = (href: string) =>
+    pathname === href
+      ? "absolute -bottom-1 left-0 right-0 h-0.5 bg-accent rounded-full"
+      : "";
 
   return (
-    <nav className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <nav
+      data-no-transition
+      className={`sticky top-0 z-50 border-b transition-all duration-300 ${
+        scrolled
+          ? "border-border/80 bg-surface/80 backdrop-blur-lg shadow-sm"
+          : "border-border bg-surface"
+      }`}
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="text-xl font-bold tracking-tight">
-            🌍 Travel Bucket List
+        <div className="flex items-center gap-10">
+          <Link href="/" className="flex items-center gap-2">
+            <svg className="h-7 w-7 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            <span className="font-display text-xl font-bold tracking-tight">
+              Wanderlust
+            </span>
           </Link>
-          <div className="hidden gap-6 sm:flex">
-            <Link
-              href="/explore"
-              className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
+          <div className="hidden gap-8 sm:flex">
+            <Link href="/explore" className={linkClass("/explore")}>
               Explore
+              <span className={activeDot("/explore")} />
             </Link>
             <Show when="signed-in">
-              <Link
-                href="/bucket-list"
-                className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              >
-                My Bucket List
+              <Link href="/bucket-list" className={linkClass("/bucket-list")}>
+                My List
+                <span className={activeDot("/bucket-list")} />
               </Link>
             </Show>
           </div>
@@ -39,7 +69,7 @@ export function Navbar() {
         <div className="flex items-center gap-4">
           <Show when="signed-out">
             <SignInButton mode="modal">
-              <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300">
+              <button className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-accent-dark">
                 Sign In
               </button>
             </SignInButton>
@@ -48,9 +78,8 @@ export function Navbar() {
             <UserButton />
           </Show>
 
-          {/* Mobile menu button */}
           <button
-            className="sm:hidden rounded-md p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="sm:hidden rounded-lg p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
@@ -64,12 +93,11 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-zinc-200 px-4 py-3 sm:hidden dark:border-zinc-800">
+        <div className="border-t border-border px-4 py-3 sm:hidden">
           <Link
             href="/explore"
-            className="block py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400"
+            className="block py-2 text-sm font-medium text-stone-600 dark:text-stone-400"
             onClick={() => setMobileOpen(false)}
           >
             Explore
@@ -77,10 +105,10 @@ export function Navbar() {
           <Show when="signed-in">
             <Link
               href="/bucket-list"
-              className="block py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400"
+              className="block py-2 text-sm font-medium text-stone-600 dark:text-stone-400"
               onClick={() => setMobileOpen(false)}
             >
-              My Bucket List
+              My List
             </Link>
           </Show>
         </div>
