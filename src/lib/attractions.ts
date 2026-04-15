@@ -67,15 +67,12 @@ export async function getAttractions(
     if (!res.ok) return [];
 
     const data = await res.json();
-    // Deduplicate by name, filter non-English names, sort by rating
+    // Deduplicate by name and sort by rating
     const seen = new Set<string>();
-    const isEnglish = (name: string) => /^[\x20-\x7E\u00C0-\u024F\u1E00-\u1EFF]+$/.test(name);
     return (data ?? [])
       .filter((p: Record<string, unknown>) => {
         const name = p.name as string;
         if (!name || seen.has(name)) return false;
-        // Skip names in non-Latin scripts (Chinese, Japanese, Arabic, etc.)
-        if (!isEnglish(name)) return false;
         seen.add(name);
         return true;
       })
@@ -95,6 +92,20 @@ export async function getAttractions(
   }
 }
 
+// Extract a clean English name from an English Wikipedia URL
+// e.g. "https://en.wikipedia.org/wiki/Eiffel_Tower" → "Eiffel Tower"
+function englishNameFromWikipedia(url: string): string | null {
+  if (!url || !url.includes("en.wikipedia.org/wiki/")) return null;
+  try {
+    const path = new URL(url).pathname;
+    const slug = path.split("/wiki/")[1];
+    if (!slug) return null;
+    return decodeURIComponent(slug).replace(/_/g, " ").replace(/ \(.*\)$/, "");
+  } catch {
+    return null;
+  }
+}
+
 export async function getAttractionDetail(
   xid: string
 ): Promise<AttractionDetail | null> {
@@ -109,11 +120,20 @@ export async function getAttractionDetail(
     if (!res.ok) return null;
 
     const d = await res.json();
+
+    // Prefer English name from Wikipedia, fall back to API name
+    const localName = d.name || "";
+    const wikiName = englishNameFromWikipedia(d.wikipedia || "");
+    const englishName = wikiName || localName;
+
+    // Use English Wikipedia extracts for description (already in English)
+    const description = d.wikipedia_extracts?.text || d.info?.descr || "";
+
     return {
       xid: d.xid || xid,
-      name: d.name || "",
+      name: englishName,
       kinds: d.kinds || "",
-      description: d.info?.descr || d.wikipedia_extracts?.text || "",
+      description,
       image: d.image || "",
       preview: d.preview?.source || "",
       wikipedia: d.wikipedia || "",
