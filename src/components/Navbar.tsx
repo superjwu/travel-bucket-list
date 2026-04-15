@@ -3,8 +3,7 @@
 import Link from "next/link";
 import {
   SignInButton,
-  SignedIn,
-  SignedOut,
+  Show,
   UserButton,
 } from "@clerk/nextjs";
 import { useState } from "react";
@@ -26,28 +25,28 @@ export function Navbar() {
             >
               Explore
             </Link>
-            <SignedIn>
+            <Show when="signed-in">
               <Link
                 href="/bucket-list"
                 className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               >
                 My Bucket List
               </Link>
-            </SignedIn>
+            </Show>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <SignedOut>
+          <Show when="signed-out">
             <SignInButton mode="modal">
               <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300">
                 Sign In
               </button>
             </SignInButton>
-          </SignedOut>
-          <SignedIn>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+          </Show>
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
 
           {/* Mobile menu button */}
           <button
@@ -75,7 +74,7 @@ export function Navbar() {
           >
             Explore
           </Link>
-          <SignedIn>
+          <Show when="signed-in">
             <Link
               href="/bucket-list"
               className="block py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400"
@@ -83,7 +82,7 @@ export function Navbar() {
             >
               My Bucket List
             </Link>
-          </SignedIn>
+          </Show>
         </div>
       )}
     </nav>

@@ -14,7 +14,7 @@ export function SearchBar({
   placeholder = "Search countries...",
 }: SearchBarProps) {
   const [local, setLocal] = useState(value);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setLocal(value);
@@ -22,7 +22,7 @@ export function SearchBar({
 
   function handleChange(v: string) {
     setLocal(v);
-    clearTimeout(timer.current);
+    if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => onChange(v), 300);
   }
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { Show, SignInButton } from "@clerk/nextjs";
 
 export default function Home() {
   return (
@@ -21,21 +21,21 @@ export default function Home() {
           >
             Start Exploring
           </Link>
-          <SignedOut>
+          <Show when="signed-out">
             <SignInButton mode="modal">
               <button className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900">
                 Sign In to Save
               </button>
             </SignInButton>
-          </SignedOut>
-          <SignedIn>
+          </Show>
+          <Show when="signed-in">
             <Link
               href="/bucket-list"
               className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               My Bucket List
             </Link>
-          </SignedIn>
+          </Show>
         </div>
       </section>
 
