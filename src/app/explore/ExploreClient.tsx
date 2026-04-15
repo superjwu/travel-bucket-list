@@ -50,7 +50,6 @@ export function ExploreClient({
       if (sort === "name") return a.name.common.localeCompare(b.name.common);
       if (sort === "population") return b.population - a.population;
 
-      // Popular sort: EU boost when logged in, then by score
       const scoreA = POPULARITY_SCORES[a.cca3] ?? 0;
       const scoreB = POPULARITY_SCORES[b.cca3] ?? 0;
 
@@ -75,7 +74,6 @@ export function ExploreClient({
     setVisibleCount((v) => Math.min(v + PAGE_SIZE, filtered.length));
   }, [filtered.length]);
 
-  // Reset visible count when filters change
   const handleSearch = useCallback((v: string) => {
     setSearch(v);
     setVisibleCount(PAGE_SIZE);
@@ -93,57 +91,63 @@ export function ExploreClient({
 
   return (
     <div>
-      {/* Controls row */}
+      {/* Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="w-full sm:max-w-sm">
           <SearchBar value={search} onChange={handleSearch} />
         </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={sort}
-            onChange={(e) => handleSort(e.target.value as SortKey)}
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
-          >
-            <option value="popular">Popular</option>
-            <option value="name">Name A-Z</option>
-            <option value="population">Population</option>
-          </select>
-        </div>
+        <select
+          value={sort}
+          onChange={(e) => handleSort(e.target.value as SortKey)}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+        >
+          <option value="popular">Popular</option>
+          <option value="name">Name A-Z</option>
+          <option value="population">Population</option>
+        </select>
       </div>
 
-      {/* Region pills */}
       <div className="mt-4">
         <RegionFilter selected={region} onChange={handleRegion} />
       </div>
 
-      {/* Result count */}
       <p className="mt-4 text-sm text-foreground/50">
         {filtered.length === 0
           ? "No countries found"
           : `${filtered.length} ${filtered.length === 1 ? "country" : "countries"}`}
       </p>
 
-      {/* Grid */}
+      {/* Pinterest / Masonry Grid */}
       {visible.length > 0 ? (
         <>
-          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {visible.map((country, index) => (
-              <div
-                key={country.cca3}
-                className={index === 0 ? "lg:col-span-2" : undefined}
-              >
-                <CountryCard
-                  country={country}
-                  isSaved={savedCodes.has(country.cca3)}
-                  safetyLevel={safetyMap[country.cca2]}
-                  photoUrl={photoMap[country.cca3]}
-                  lazy={index >= 8}
-                />
-              </div>
-            ))}
+          <div className="mt-6 columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4">
+            {visible.map((country, index) => {
+              // Vary card height: top-ranked get tall, others alternate
+              const score = POPULARITY_SCORES[country.cca3] ?? 0;
+              const variant: "tall" | "medium" | "short" =
+                score >= 85
+                  ? "tall"
+                  : score >= 40
+                    ? "medium"
+                    : index % 3 === 0
+                      ? "medium"
+                      : "short";
+
+              return (
+                <div key={country.cca3} className="mb-5 break-inside-avoid">
+                  <CountryCard
+                    country={country}
+                    isSaved={savedCodes.has(country.cca3)}
+                    safetyLevel={safetyMap[country.cca2]}
+                    photoUrl={photoMap[country.cca3]}
+                    lazy={index >= 8}
+                    variant={variant}
+                  />
+                </div>
+              );
+            })}
           </div>
 
-          {/* Load more */}
           {hasMore && (
             <div className="mt-10 flex justify-center">
               <button
