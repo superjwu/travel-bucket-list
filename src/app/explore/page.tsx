@@ -1,5 +1,7 @@
 import { getAllCountries } from "@/lib/countries";
 import { getTravelAdvisories } from "@/lib/safety";
+import { getPhotoMapForCountries } from "@/lib/pexels";
+import { PHOTO_COUNTRIES } from "@/lib/popular-countries";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { auth } from "@clerk/nextjs/server";
 import { ExploreClient } from "./ExploreClient";
@@ -10,23 +12,24 @@ export const metadata = {
 };
 
 export default async function ExplorePage() {
-  // Fetch countries + advisories in parallel
-  const [countries, advisories] = await Promise.all([
+  // Fetch everything in parallel
+  const [countries, advisories, photoMap, authResult] = await Promise.all([
     getAllCountries(),
     getTravelAdvisories(),
+    getPhotoMapForCountries(PHOTO_COUNTRIES),
+    auth(),
   ]);
 
-  // Build safety map: cca2 (ISO alpha-2) → advisory level
+  // Build safety map: cca2 → level
   const safetyMap: Record<string, number> = {};
   for (const [code, advisory] of advisories.entries()) {
-    // The advisory uses alpha-2 codes; store directly
     safetyMap[code] = advisory.level;
   }
 
-  // If user is signed in, fetch their saved country codes
+  // If signed in, fetch saved codes
   let savedCodes = new Set<string>();
-  const { userId } = await auth();
-  if (userId) {
+  const isLoggedIn = !!authResult.userId;
+  if (isLoggedIn) {
     const supabase = await createServerSupabaseClient();
     const { data } = await supabase
       .from("bucket_list_items")
@@ -52,6 +55,8 @@ export default async function ExplorePage() {
         countries={countries}
         savedCodes={savedCodes}
         safetyMap={safetyMap}
+        photoMap={photoMap}
+        isLoggedIn={isLoggedIn}
       />
     </div>
   );
