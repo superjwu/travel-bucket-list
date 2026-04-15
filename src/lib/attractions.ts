@@ -67,12 +67,16 @@ export async function getAttractions(
     if (!res.ok) return [];
 
     const data = await res.json();
-    // Deduplicate by name and sort by rating
+    // Deduplicate by name, filter non-English names, sort by rating
     const seen = new Set<string>();
+    const isEnglish = (name: string) => /^[\x20-\x7E\u00C0-\u024F\u1E00-\u1EFF]+$/.test(name);
     return (data ?? [])
       .filter((p: Record<string, unknown>) => {
-        if (!p.name || seen.has(p.name as string)) return false;
-        seen.add(p.name as string);
+        const name = p.name as string;
+        if (!name || seen.has(name)) return false;
+        // Skip names in non-Latin scripts (Chinese, Japanese, Arabic, etc.)
+        if (!isEnglish(name)) return false;
+        seen.add(name);
         return true;
       })
       .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
