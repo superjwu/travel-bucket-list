@@ -1,6 +1,9 @@
 const BASE_URL = "https://restcountries.com/v3.1";
-const FIELDS =
-  "name,cca2,cca3,flags,region,subregion,capital,population,languages,currencies,latlng,area,borders,maps,coatOfArms,demonyms,timezones,car";
+
+// REST Countries API limits to 10 fields per request
+const LIST_FIELDS = "name,cca2,cca3,flags,region,subregion,capital,population,languages,latlng";
+const DETAIL_FIELDS = "name,cca2,cca3,flags,region,subregion,capital,population,languages,currencies";
+const DETAIL_EXTRA_FIELDS = "latlng,area,borders,maps,coatOfArms,demonyms,timezones,car,name,cca3";
 
 export interface Country {
   name: { common: string; official: string };
@@ -24,7 +27,7 @@ export interface Country {
 }
 
 export async function getAllCountries(): Promise<Country[]> {
-  const res = await fetch(`${BASE_URL}/all?fields=${FIELDS}`, {
+  const res = await fetch(`${BASE_URL}/all?fields=${LIST_FIELDS}`, {
     next: { revalidate: 86400 },
   });
   if (!res.ok) throw new Error("Failed to fetch countries");
@@ -34,13 +37,24 @@ export async function getAllCountries(): Promise<Country[]> {
 export async function getCountryByCode(
   code: string
 ): Promise<Country | null> {
-  const res = await fetch(`${BASE_URL}/alpha/${code}?fields=${FIELDS}`, {
-    next: { revalidate: 86400 },
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error("Failed to fetch country");
-  const data = await res.json();
-  return Array.isArray(data) ? data[0] : data;
+  // Fetch both field sets in parallel to get all data within 10-field limit
+  const [res1, res2] = await Promise.all([
+    fetch(`${BASE_URL}/alpha/${code}?fields=${DETAIL_FIELDS}`, {
+      next: { revalidate: 86400 },
+    }),
+    fetch(`${BASE_URL}/alpha/${code}?fields=${DETAIL_EXTRA_FIELDS}`, {
+      next: { revalidate: 86400 },
+    }),
+  ]);
+
+  if (res1.status === 404 || res2.status === 404) return null;
+  if (!res1.ok || !res2.ok) throw new Error("Failed to fetch country");
+
+  const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
+  const d1 = Array.isArray(data1) ? data1[0] : data1;
+  const d2 = Array.isArray(data2) ? data2[0] : data2;
+
+  return { ...d1, ...d2 };
 }
 
 export function formatPopulation(pop: number): string {
