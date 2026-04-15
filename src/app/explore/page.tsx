@@ -1,4 +1,5 @@
 import { getAllCountries } from "@/lib/countries";
+import { getTravelAdvisories } from "@/lib/safety";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { auth } from "@clerk/nextjs/server";
 import { ExploreClient } from "./ExploreClient";
@@ -9,7 +10,18 @@ export const metadata = {
 };
 
 export default async function ExplorePage() {
-  const countries = await getAllCountries();
+  // Fetch countries + advisories in parallel
+  const [countries, advisories] = await Promise.all([
+    getAllCountries(),
+    getTravelAdvisories(),
+  ]);
+
+  // Build safety map: cca2 (ISO alpha-2) → advisory level
+  const safetyMap: Record<string, number> = {};
+  for (const [code, advisory] of advisories.entries()) {
+    // The advisory uses alpha-2 codes; store directly
+    safetyMap[code] = advisory.level;
+  }
 
   // If user is signed in, fetch their saved country codes
   let savedCodes = new Set<string>();
@@ -25,18 +37,21 @@ export default async function ExplorePage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+        <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">
           Explore Countries
         </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-          Discover {countries.length} countries around the world and add them to your bucket list.
+        <p className="mt-2 text-foreground/60">
+          Discover {countries.length} countries around the world and add them to
+          your bucket list.
         </p>
       </div>
+
       <ExploreClient
         countries={countries}
         savedCodes={savedCodes}
+        safetyMap={safetyMap}
       />
     </div>
   );
