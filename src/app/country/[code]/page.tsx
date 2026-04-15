@@ -149,8 +149,8 @@ export default async function CountryPage(props: {
           <SafetySection cca2={country.cca2} />
         </Suspense>
 
-        <Suspense fallback={<SectionSkeleton title="Top Attractions" />}>
-          <AttractionsSection latlng={country.latlng} />
+        <Suspense fallback={<SectionSkeleton title="Places of Interest" />}>
+          <AttractionsSection cca3={country.cca3} />
         </Suspense>
 
         <Suspense fallback={<SectionSkeleton title="Quality of Life" />}>
